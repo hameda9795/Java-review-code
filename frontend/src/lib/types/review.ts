@@ -49,3 +49,15 @@ export interface ReviewStats {
   totalFindings: number;
   criticalIssues: number;
 }
+
+export interface GeneratedPrompt {
+  prompt: string;
+  totalFindings: number;
+  criticalCount: number;
+  highCount: number;
+  mediumCount: number;
+  lowCount: number;
+  reviewId: string;
+  generatedAt: string;
+  instructions: string;
+}

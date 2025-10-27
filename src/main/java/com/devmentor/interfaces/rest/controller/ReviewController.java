@@ -1,9 +1,11 @@
 package com.devmentor.interfaces.rest.controller;
 
+import com.devmentor.application.codereview.PromptGenerationService;
 import com.devmentor.application.codereview.ReportGeneratorService;
 import com.devmentor.application.codereview.ReviewService;
 import com.devmentor.domain.codereview.CodeReview;
 import com.devmentor.interfaces.rest.dto.CreateReviewRequest;
+import com.devmentor.interfaces.rest.dto.GeneratedPromptDTO;
 import com.devmentor.interfaces.rest.dto.ReviewFindingDto;
 import com.devmentor.interfaces.rest.dto.ReviewResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +36,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
     private final ReportGeneratorService reportGeneratorService;
+    private final PromptGenerationService promptGenerationService;
 
     /**
      * Create a new code review from uploaded files
@@ -255,8 +259,51 @@ public class ReviewController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+        /**
+     * Generate AI-ready prompt for fixing all issues
+     */
+    @GetMapping("/{reviewId}/generate-prompt")
+    @Operation(summary = "Generate AI fixing prompt", description = "Generates a comprehensive prompt for AI to fix all review findings")
+    public ResponseEntity<GeneratedPromptDTO> generatePrompt(
+            @PathVariable UUID reviewId
+    ) {
+        log.info("Generating AI fixing prompt for review: {}", reviewId);
+
+        CodeReview review = reviewService.getReview(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review not found with ID: " + reviewId));
+        String prompt = promptGenerationService.generateFixingPrompt(review);
+        
+        // Count findings by severity
+        long criticalCount = review.getFindings().stream()
+            .filter(f -> f.getSeverity() == com.devmentor.domain.codereview.FindingSeverity.CRITICAL)
+            .count();
+        long highCount = review.getFindings().stream()
+            .filter(f -> f.getSeverity() == com.devmentor.domain.codereview.FindingSeverity.HIGH)
+            .count();
+        long mediumCount = review.getFindings().stream()
+            .filter(f -> f.getSeverity() == com.devmentor.domain.codereview.FindingSeverity.MEDIUM)
+            .count();
+        long lowCount = review.getFindings().stream()
+            .filter(f -> f.getSeverity() == com.devmentor.domain.codereview.FindingSeverity.LOW)
+            .count();
+        
+        GeneratedPromptDTO response = new GeneratedPromptDTO(
+            prompt,
+            review.getFindings().size(),
+            (int) criticalCount,
+            (int) highCount,
+            (int) mediumCount,
+            (int) lowCount,
+            reviewId.toString(),
+            LocalDateTime.now(),
+            "Copy this prompt and paste it into Claude AI or another AI assistant to fix all the issues in your code."
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
     /**
-     * Sanitize filename to remove invalid characters
+     * Sanitize filename for download
      */
     private String sanitizeFilename(String filename) {
         return filename.replaceAll("[^a-zA-Z0-9-_\\s]", "")

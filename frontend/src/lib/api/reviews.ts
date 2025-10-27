@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { CodeReview, CreateReviewRequest, ReviewStats } from '../types/review';
+import { CodeReview, CreateReviewRequest, ReviewStats, GeneratedPrompt } from '../types/review';
 
 export const reviewsApi = {
   create: async (data: CreateReviewRequest): Promise<CodeReview> => {
@@ -80,5 +80,10 @@ export const reviewsApi = {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
+  },
+
+  generatePrompt: async (id: string): Promise<GeneratedPrompt> => {
+    const response = await apiClient.get(`/reviews/${id}/generate-prompt`);
+    return response.data;
   },
 };

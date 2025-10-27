@@ -28,6 +28,7 @@ import { QualityScoreDashboard } from "@/components/review/quality-score-dashboa
 import { FindingsExplorer } from "@/components/review/findings-explorer";
 import { HiringImpactPanel } from "@/components/review/hiring-impact-panel";
 import { LearningPath } from "@/components/review/learning-path";
+import { AIPromptGenerator } from "@/components/review/ai-prompt-generator";
 
 export default function ReviewDetailsPageEnhanced() {
   const params = useParams();
@@ -296,6 +297,10 @@ export default function ReviewDetailsPageEnhanced() {
 
         {/* Findings Tab */}
         <TabsContent value="findings" className="space-y-6">
+          {/* AI Prompt Generator */}
+          <AIPromptGenerator reviewId={reviewId} />
+          
+          {/* Findings Explorer */}
           <FindingsExplorer
             findings={review.findings}
             onResolveFinding={(findingId) => resolveFindingMutation.mutate(findingId)}
