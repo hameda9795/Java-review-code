@@ -79,6 +79,13 @@ public class User extends BaseEntity {
     @Builder.Default
     private Integer totalFilesReviewed = 0;
 
+    @Column(name = "usage_limit")
+    private Integer usageLimit;  // null means no limit, used for special users
+
+    @Column(name = "is_special_user", nullable = false)
+    @Builder.Default
+    private Boolean isSpecialUser = false;
+
     // Business methods
     public void recordLogin() {
         this.lastLoginAt = LocalDateTime.now();
@@ -97,10 +104,29 @@ public class User extends BaseEntity {
             return false;
         }
 
+        // Special users: check usage limit
+        if (isSpecialUser) {
+            return usageLimit == null || reviewsCount < usageLimit;
+        }
+
         // Free tier: check subscription tier limit
         // Premium tier: unlimited
         return subscriptionTier == SubscriptionTier.PREMIUM ||
                reviewsCount < subscriptionTier.getMaxReviewsPerMonth();
+    }
+
+    public void makeSpecialUser(Integer usageLimit) {
+        this.isSpecialUser = true;
+        this.usageLimit = usageLimit;
+    }
+
+    public void revokeSpecialUser() {
+        this.isSpecialUser = false;
+        this.usageLimit = null;
+    }
+
+    public void updateUsageLimit(Integer usageLimit) {
+        this.usageLimit = usageLimit;
     }
 
     public boolean hasGithubConnected() {

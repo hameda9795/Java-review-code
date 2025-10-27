@@ -19,6 +19,7 @@ public class AuthResponse {
     private UUID userId;
     private String username;
     private String email;
+    private String role;
     private String subscriptionTier;
     private String githubUsername;
     private Boolean githubConnected;

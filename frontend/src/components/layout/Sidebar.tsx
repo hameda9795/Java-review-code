@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, FileCode, Plus, Settings } from "lucide-react";
+import { LayoutDashboard, FileCode, Plus, Settings, Shield, Users, Star } from "lucide-react";
+import { useAuthStore } from "@/lib/store/authStore";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -12,8 +13,16 @@ const navigation = [
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
+const adminNavigation = [
+  { name: "Admin Dashboard", href: "/dashboard/admin", icon: Shield },
+  { name: "Manage Users", href: "/dashboard/admin/users", icon: Users },
+  { name: "Special Users", href: "/dashboard/admin/special-users", icon: Star },
+];
+
 export function Sidebar() {
   const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <aside className="w-64 border-r bg-muted/10 min-h-[calc(100vh-73px)]">
@@ -36,6 +45,35 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Admin Section */}
+        {isAdmin && (
+          <>
+            <div className="pt-4 pb-2 px-4">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Admin
+              </div>
+            </div>
+            {adminNavigation.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-purple-600 text-white"
+                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
     </aside>
   );

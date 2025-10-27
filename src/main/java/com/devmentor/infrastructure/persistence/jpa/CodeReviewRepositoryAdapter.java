@@ -74,4 +74,14 @@ public class CodeReviewRepositoryAdapter implements CodeReviewRepository {
     public long countByStatus(ReviewStatus status) {
         return jpaCodeReviewRepository.countByStatus(status);
     }
+
+    @Override
+    public long countAll() {
+        return jpaCodeReviewRepository.count();
+    }
+
+    @Override
+    public long countByCreatedAtAfter(LocalDateTime date) {
+        return jpaCodeReviewRepository.countByCreatedAtAfter(date);
+    }
 }

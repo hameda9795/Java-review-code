@@ -8,9 +8,10 @@ import { useState } from "react";
 interface GitHubConnectButtonProps {
   onSuccess?: () => void;
   onError?: (error: Error) => void;
+  isLinking?: boolean; // Whether this is linking to existing account (default: true)
 }
 
-export function GitHubConnectButton({ onSuccess, onError }: GitHubConnectButtonProps) {
+export function GitHubConnectButton({ onSuccess, onError, isLinking = true }: GitHubConnectButtonProps) {
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnect = async () => {
@@ -24,7 +25,9 @@ export function GitHubConnectButton({ onSuccess, onError }: GitHubConnectButtonP
       }
 
       // Redirect to GitHub OAuth
-      githubApi.initiateOAuth(clientId);
+      // isLinking=true means the user is already logged in and wants to link their GitHub
+      // isLinking=false means the user is logging in via GitHub
+      githubApi.initiateOAuth(clientId, isLinking);
     } catch (error) {
       setIsConnecting(false);
       onError?.(error as Error);

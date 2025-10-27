@@ -10,7 +10,7 @@ import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 export default function GitHubCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setAuth } = useAuthStore();
+  const { user, setAuth } = useAuthStore();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Connecting to GitHub...");
 
@@ -22,6 +22,7 @@ export default function GitHubCallbackPage() {
       if (error) {
         setStatus("error");
         setMessage("GitHub authorization was denied or failed.");
+        githubApi.clearLinkingFlow();
         setTimeout(() => router.push("/dashboard/settings"), 3000);
         return;
       }
@@ -29,38 +30,65 @@ export default function GitHubCallbackPage() {
       if (!code) {
         setStatus("error");
         setMessage("No authorization code received from GitHub.");
+        githubApi.clearLinkingFlow();
         setTimeout(() => router.push("/dashboard/settings"), 3000);
         return;
       }
 
       try {
-        setMessage("Exchanging authorization code...");
-        const response = await githubApi.handleCallback(code);
-
-        // If the response contains a token, this is a new user logging in via GitHub
-        if (response.token) {
+        // Check if this is a linking flow (user already logged in)
+        const isLinking = githubApi.isLinkingFlow();
+        
+        if (isLinking && user) {
+          // User is already logged in, link GitHub to their existing account
+          setMessage("Linking GitHub to your account...");
+          const response = await githubApi.linkAccount(code);
+          
+          githubApi.clearLinkingFlow();
+          setStatus("success");
+          setMessage("GitHub account linked successfully! Redirecting...");
+          
+          // Update the user's GitHub info in the store without changing their session
           setAuth(
             {
-              id: response.userId,
-              username: response.username,
-              email: response.email,
-              subscriptionTier: response.subscriptionTier,
+              ...user,
               githubUsername: response.githubUsername,
               githubConnected: response.githubConnected,
             },
-            response.token
+            localStorage.getItem('token') || ''
           );
-          setStatus("success");
-          setMessage("Successfully authenticated with GitHub! Redirecting to dashboard...");
-          setTimeout(() => router.push("/dashboard"), 2000);
-        } else {
-          // Existing user connected GitHub account
-          setStatus("success");
-          setMessage("GitHub account connected successfully! Redirecting...");
+          
           setTimeout(() => router.push("/dashboard/settings"), 2000);
+        } else {
+          // New user logging in via GitHub
+          setMessage("Exchanging authorization code...");
+          const response = await githubApi.handleCallback(code);
+
+          githubApi.clearLinkingFlow();
+          
+          // This is a new login, set the auth with the token from response
+          if (response.token) {
+            setAuth(
+              {
+                id: response.userId,
+                username: response.username,
+                email: response.email,
+                subscriptionTier: response.subscriptionTier,
+                githubUsername: response.githubUsername,
+                githubConnected: response.githubConnected,
+              },
+              response.token
+            );
+            setStatus("success");
+            setMessage("Successfully authenticated with GitHub! Redirecting to dashboard...");
+            setTimeout(() => router.push("/dashboard"), 2000);
+          } else {
+            throw new Error("No token received from GitHub authentication");
+          }
         }
       } catch (err) {
         console.error("GitHub callback error:", err);
+        githubApi.clearLinkingFlow();
         setStatus("error");
         setMessage(
           err instanceof Error
@@ -72,7 +100,7 @@ export default function GitHubCallbackPage() {
     };
 
     handleCallback();
-  }, [searchParams, router, setAuth]);
+  }, [searchParams, router, setAuth, user]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

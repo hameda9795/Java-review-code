@@ -36,10 +36,11 @@ public class GitHubController {
 
     /**
      * GitHub OAuth callback - exchange code for access token
+     * This is used when users login/register via GitHub (not logged in yet)
      */
     @PostMapping("/oauth/callback")
     public ResponseEntity<AuthResponse> handleOAuthCallback(@RequestParam String code) {
-        log.info("=== GitHub OAuth callback received ===");
+        log.info("=== GitHub OAuth callback received (new user login) ===");
         log.info("Code parameter: {}", code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null");
 
         try {
@@ -54,6 +55,7 @@ public class GitHubController {
                     user.getId(),
                     user.getUsername(),
                     user.getEmail(),
+                    user.getRole().name(),
                     user.getSubscriptionTier().name(),
                     user.getGithubUsername(),
                     user.hasGithubConnected()
@@ -63,6 +65,36 @@ public class GitHubController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("Error during GitHub OAuth callback", e);
+            throw e;
+        }
+    }
+
+    /**
+     * Link GitHub account to existing logged-in user
+     * This endpoint requires authentication and links GitHub to the current user
+     */
+    @PostMapping("/oauth/link")
+    public ResponseEntity<Map<String, Object>> linkGitHubAccount(
+            @RequestParam String code,
+            @RequestHeader("X-User-Id") UUID userId
+    ) {
+        log.info("=== Linking GitHub account to existing user: {} ===", userId);
+        log.info("Code parameter: {}", code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null");
+
+        try {
+            User user = gitHubService.linkGitHubAccount(code, userId);
+            log.info("GitHub account linked successfully: {}", user.getGithubUsername());
+
+            Map<String, Object> response = Map.of(
+                    "success", true,
+                    "message", "GitHub account linked successfully",
+                    "githubUsername", user.getGithubUsername(),
+                    "githubConnected", user.hasGithubConnected()
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error linking GitHub account", e);
             throw e;
         }
     }

@@ -23,7 +23,7 @@ public class GitHubService {
     private final UserRepository userRepository;
 
     /**
-     * Authenticate user with GitHub OAuth
+     * Authenticate user with GitHub OAuth (for new users logging in via GitHub)
      */
     @Transactional
     public User authenticateWithGitHub(String code) {
@@ -59,6 +59,38 @@ public class GitHubService {
                 .build();
 
         return userRepository.save(newUser);
+    }
+
+    /**
+     * Link GitHub account to an existing logged-in user
+     */
+    @Transactional
+    public User linkGitHubAccount(String code, UUID userId) {
+        // Exchange code for access token
+        String accessToken = gitHubClient.getAccessToken(code);
+        if (accessToken == null) {
+            throw new RuntimeException("Failed to get GitHub access token");
+        }
+
+        // Get GitHub user information
+        GitHubUser githubUser = gitHubClient.getUser(accessToken);
+        if (githubUser == null) {
+            throw new RuntimeException("Failed to get GitHub user information");
+        }
+
+        // Get the current logged-in user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Check if this GitHub account is already linked to another user
+        Optional<User> existingGithubUser = userRepository.findByGithubId(githubUser.getId());
+        if (existingGithubUser.isPresent() && !existingGithubUser.get().getId().equals(userId)) {
+            throw new RuntimeException("This GitHub account is already linked to another user");
+        }
+
+        // Link GitHub account to the current user
+        user.connectGithub(githubUser.getId(), githubUser.getLogin(), accessToken);
+        return userRepository.save(user);
     }
 
     /**

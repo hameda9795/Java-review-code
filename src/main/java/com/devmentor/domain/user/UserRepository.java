@@ -1,5 +1,6 @@
 package com.devmentor.domain.user;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,4 +25,14 @@ public interface UserRepository {
     boolean existsByUsername(String username);
 
     void delete(User user);
+
+    List<User> findAll();
+
+    List<User> findByIsSpecialUser(Boolean isSpecialUser);
+
+    long countAll();
+
+    long countByIsActive(Boolean isActive);
+
+    long countByIsSpecialUser(Boolean isSpecialUser);
 }

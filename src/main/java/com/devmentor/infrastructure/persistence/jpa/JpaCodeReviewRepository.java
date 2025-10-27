@@ -33,4 +33,6 @@ public interface JpaCodeReviewRepository extends JpaRepository<CodeReview, UUID>
     long countByReviewerId(UUID reviewerId);
 
     long countByStatus(ReviewStatus status);
+
+    long countByCreatedAtAfter(LocalDateTime date);
 }

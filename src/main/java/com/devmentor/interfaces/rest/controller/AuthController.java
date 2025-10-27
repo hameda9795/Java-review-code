@@ -46,6 +46,7 @@ public class AuthController {
                 .userId(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .role(user.getRole().name())
                 .subscriptionTier(user.getSubscriptionTier().name())
                 .build();
 
@@ -67,6 +68,7 @@ public class AuthController {
                 .userId(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .role(user.getRole().name())
                 .subscriptionTier(user.getSubscriptionTier().name())
                 .build();
 

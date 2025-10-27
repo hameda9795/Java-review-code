@@ -31,4 +31,8 @@ public interface CodeReviewRepository {
     long countByReviewerId(UUID reviewerId);
 
     long countByStatus(ReviewStatus status);
+
+    long countAll();
+
+    long countByCreatedAtAfter(LocalDateTime date);
 }

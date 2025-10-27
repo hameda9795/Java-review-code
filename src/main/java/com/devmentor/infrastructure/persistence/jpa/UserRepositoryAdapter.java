@@ -5,6 +5,7 @@ import com.devmentor.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -56,5 +57,30 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public void delete(User user) {
         jpaUserRepository.delete(user);
+    }
+
+    @Override
+    public List<User> findAll() {
+        return jpaUserRepository.findAll();
+    }
+
+    @Override
+    public List<User> findByIsSpecialUser(Boolean isSpecialUser) {
+        return jpaUserRepository.findByIsSpecialUser(isSpecialUser);
+    }
+
+    @Override
+    public long countAll() {
+        return jpaUserRepository.count();
+    }
+
+    @Override
+    public long countByIsActive(Boolean isActive) {
+        return jpaUserRepository.countByIsActive(isActive);
+    }
+
+    @Override
+    public long countByIsSpecialUser(Boolean isSpecialUser) {
+        return jpaUserRepository.countByIsSpecialUser(isSpecialUser);
     }
 }

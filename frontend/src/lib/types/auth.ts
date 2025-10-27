@@ -3,6 +3,7 @@ export interface User {
   username: string;
   email: string;
   fullName?: string;
+  role?: 'USER' | 'ADMIN';
   subscriptionTier: 'FREE' | 'PREMIUM';
   reviewsCount: number;
   isActive: boolean;
@@ -28,6 +29,7 @@ export interface AuthResponse {
   userId: string;
   username: string;
   email: string;
+  role: string;
   subscriptionTier: string;
   githubUsername?: string;
   githubConnected?: boolean;

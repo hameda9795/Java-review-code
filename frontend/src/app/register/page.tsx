@@ -35,7 +35,10 @@ export default function RegisterPage() {
           id: response.userId,
           username: response.username,
           email: response.email,
-          subscriptionTier: response.subscriptionTier,
+          role: response.role as 'USER' | 'ADMIN',
+          subscriptionTier: response.subscriptionTier as 'FREE' | 'PREMIUM',
+          reviewsCount: 0,
+          isActive: true,
         },
         response.token
       );
